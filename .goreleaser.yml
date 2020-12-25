@@ -19,16 +19,31 @@ builds:
       - darwin
 archives:
   - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
       386: i386
       amd64: x86_64
+      darwin: macOS
+nfpms:
+  - id: default
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
+      386: i386
+      amd64: x86_64
+      darwin: macOS
+    vendor: freakinhippie
+    maintainer: Joshua Colson <joshua.colson@gmail.com>
+    description: Token Helper for HashiCorp Vault
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    release: 1
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ .Tag }}-{{ .CommitTimestamp }}-next"
 changelog:
   sort: asc
   filters:

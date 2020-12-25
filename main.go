@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -75,7 +76,12 @@ func disable(vaultConfig string) error {
 }
 
 func main() {
-	helper, _ := filepath.Abs(os.Args[0])
+	// get the path to this executable
+	binPath, _ := exec.LookPath(os.Args[0])
+	// convert the path to an absolute path
+	helperAbsPath, _ := filepath.Abs(binPath)
+	// extract the base name
+	helper := filepath.Base(helperAbsPath)
 	if len(os.Args) != 2 {
 		// the vault token helper api accepts of of three arguments
 		fmt.Fprintf(os.Stderr, "usage: %s get|store|erase|enable|disable\n", helper)
@@ -110,11 +116,12 @@ func main() {
 
 	// create the directory, if needed
 	if _, err := os.Stat(tokenDir); os.IsNotExist(err) {
-		if err := os.Mkdir(tokenDir, 0750); err != nil {
+		if err := os.Mkdir(tokenDir, 0700); err != nil {
 			fmt.Fprintf(os.Stderr, "unable to create tokens directory [%s]: %s", tokenDir, err.Error())
 			os.Exit(4)
 		}
 	}
+
 	// read any tokens
 	if content, err := ioutil.ReadFile(tokenFile); err == nil {
 		if err = json.Unmarshal(content, &tokens); err != nil {
@@ -123,6 +130,7 @@ func main() {
 		}
 	}
 
+	// process command argument
 	switch os.Args[1] {
 	case "get":
 		if err := get(vaultAddr); err != nil {
@@ -139,7 +147,9 @@ func main() {
 				os.Exit(7)
 			}
 		} else {
-			// erase when the token is an empty string
+			// erase when the token is an empty string,
+			// as outlined in the [Storing] section here:
+			//   https://www.hashicorp.com/blog/building-a-vault-token-helper
 			if err := erase(vaultAddr); err != nil {
 				fmt.Fprintf(os.Stderr, "error erasing token for %s: %s", vaultAddr, err.Error())
 				os.Exit(8)
@@ -151,7 +161,7 @@ func main() {
 			os.Exit(9)
 		}
 	case "enable":
-		if err := enable(vaultConfig, fmt.Sprintf(`token_helper = "%s"`, helper)); err != nil {
+		if err := enable(vaultConfig, fmt.Sprintf("token_helper = \"%s\"\n", helperAbsPath)); err != nil {
 			fmt.Fprintf(os.Stderr, "error enabling vault token helper: %s", err.Error())
 			os.Exit(10)
 		}
