@@ -20,6 +20,14 @@ This will write a suitable configuration file to `~/.vault` or the path specifie
 
 Tokens will be written to `~/.config/vault.d/tokens` in JSON. This directory will be created if it doesn't exist.
 
+#### Erasing Tokens
+
+Any existing token for the vault identified by `VAULT_ADDR` can be removed from the token file with the following command:
+
+```sh
+vault-token-helper erase
+```
+
 ## Disable Token Helper
 
 Disable the token helper by running:
